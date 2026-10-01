@@ -9,6 +9,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
+import java.time.Instant;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
@@ -16,7 +17,7 @@ import java.util.concurrent.ExecutionException;
 @Service
 public class UserService {
     private final Firestore db;
-    private Logger log = LoggerFactory.getLogger(UserService.class);
+    private final Logger log = LoggerFactory.getLogger(UserService.class);
 
     public UserService(Firestore db) {
         this.db = db;
@@ -27,25 +28,20 @@ public class UserService {
             var docRef = db.collection("users").document(userId);
             var user = docRef.get().get();
 
+            User parsedUser = user.toObject(User.class);
+
             if(user.exists()) {
-                return new UserResponse(user.getString("fullName"), user.getString("id"), user.getString("email"), user.getString("phone"), user.getString("profilePic"), user.getLong("createdAt"));
+               return parsedUser.toResponse();
             }
 
             UserRecord userRecord = FirebaseAuth.getInstance().getUser(userId);
             long creationMilli = userRecord.getUserMetadata().getCreationTimestamp();
 
-            Map<String, Object> userProfile = new HashMap<>();
-            userProfile.put("userId", userId);
-            userProfile.put("email", request.email());
-            userProfile.put("fullName", request.fullName());
-            userProfile.put("phone", request.phone());
-            userProfile.put("biometricsEnabled", request.biometricsEnabled());
-            userProfile.put("createdAt", creationMilli);
+            User newUser = new User(userId, request.fullName(), request.phone(), request.email(), null, Instant.ofEpochMilli(creationMilli));
 
-
-            docRef.set(userProfile).get();
+            docRef.set(newUser).get();
             log.info("user created successfully for user {}", request.email());
-            return new UserResponse(request.fullName(), userId, request.email(), request.phone(), null, creationMilli);
+            return newUser.toResponse();
         } catch (ExecutionException | InterruptedException | FirebaseAuthException e) {
             log.error(e.getMessage());
             throw new AuthException("Failed to create your account, please try again");
