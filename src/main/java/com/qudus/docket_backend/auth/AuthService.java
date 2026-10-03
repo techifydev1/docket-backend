@@ -13,6 +13,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
+import java.security.SecureRandom;
 import java.util.List;
 
 @Service
@@ -22,11 +23,14 @@ public class AuthService {
     private final UserService userService;
     private final FamilyService familyService;
     private final EmailService emailService;
+    private static final SecureRandom secureRandom = new SecureRandom();
+    private final VerificationService verificationService;
 
-    public  AuthService(UserService userService, FamilyService familyService, EmailService emailService) {
+    public  AuthService(UserService userService, FamilyService familyService, EmailService emailService, VerificationService verificationService) {
         this.userService = userService;
         this.familyService = familyService;
         this.emailService = emailService;
+        this.verificationService = verificationService;
     }
 
     public AuthResponse register(String userId, @NonNull AuthRequest request) {
@@ -37,8 +41,26 @@ public class AuthService {
         CreateFamilyRequest familyRequest = new CreateFamilyRequest(request.vaultName(), userId);
         UserResponse user = userService.createUser(userId, userRequest);
         FamilyResponse family = familyService.createFamily(familyRequest, userId);
-        String content = "";
+        String code = generate6DigitRandomCode();
+        verificationService.saveVerificationCode(request.email(), code);
+        String content = """
+                <h1>Welcome to Docket!</h1>
+                <p>Here's your 6 digit verification code</p>
+                
+                <p> %s </p>
+                
+                <p>Please note that this code expires in 15 minutes.</p>
+                
+                <p>Best regards,</p>
+                <p>Docket team.</p>
+                """.formatted(code);
+        emailService.sendEmail(request.email(), content);
         log.info("User {} registered successfully", userId);
         return new AuthResponse(user, List.of(family));
+    }
+
+    public static String generate6DigitRandomCode() {
+        int number = 100000 + secureRandom.nextInt(900000);
+        return String.valueOf(number);
     }
 }
