@@ -9,6 +9,8 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.Map;
+
 @RestController
 @RequestMapping("/api/auth")
 public class AuthController {
@@ -21,5 +23,12 @@ public class AuthController {
     public ResponseEntity<AuthResponse> handleRegisterRequest(@RequestBody AuthRequest request, @AuthenticationPrincipal FirebaseToken token) {
         String userId = token.getUid();
         return ResponseEntity.status(HttpStatus.CREATED).body(authService.register(userId, request));
+    }
+
+    @PostMapping("/verify")
+    public ResponseEntity<Map<String, String>> handleVerificationRequest(@AuthenticationPrincipal FirebaseToken token, @RequestBody VerifyEmailRequest request) {
+        String userId = token.getUid();
+        String email = token.getEmail();
+        return ResponseEntity.status(HttpStatus.OK).body(authService.verifyEmail(userId, email, request));
     }
 }

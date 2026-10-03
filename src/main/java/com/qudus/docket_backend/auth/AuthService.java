@@ -1,5 +1,6 @@
 package com.qudus.docket_backend.auth;
 
+import com.google.cloud.firestore.Firestore;
 import com.qudus.docket_backend.email.EmailService;
 import com.qudus.docket_backend.exceptions.AuthException;
 import com.qudus.docket_backend.family.CreateFamilyRequest;
@@ -15,6 +16,8 @@ import org.springframework.stereotype.Service;
 
 import java.security.SecureRandom;
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ExecutionException;
 
 @Service
 public class AuthService {
@@ -25,12 +28,14 @@ public class AuthService {
     private final EmailService emailService;
     private static final SecureRandom secureRandom = new SecureRandom();
     private final VerificationService verificationService;
+    private final Firestore db;
 
-    public  AuthService(UserService userService, FamilyService familyService, EmailService emailService, VerificationService verificationService) {
+    public  AuthService(UserService userService, FamilyService familyService, EmailService emailService, VerificationService verificationService, Firestore db) {
         this.userService = userService;
         this.familyService = familyService;
         this.emailService = emailService;
         this.verificationService = verificationService;
+        this.db = db;
     }
 
     public AuthResponse register(String userId, @NonNull AuthRequest request) {
@@ -57,6 +62,22 @@ public class AuthService {
         emailService.sendEmail(request.email(), content);
         log.info("User {} registered successfully", userId);
         return new AuthResponse(user, List.of(family));
+    }
+
+    public Map<String, String> verifyEmail(String userId, String email, VerifyEmailRequest request) {
+        try {
+            boolean isValid = verificationService.isValid(email, request.code());
+            if(!isValid) {
+                throw new AuthException("Expired or invalid code");
+            }
+            var docRef = db.collection("users").document(userId);
+            docRef.update("emailVerified", true).get();
+            log.info("Email verified for user: {}", userId);
+            return Map.of("message", "Email verified successfully");
+        } catch (ExecutionException | InterruptedException e) {
+            log.error("Failed to verify user: {}", userId);
+            throw new AuthException("We're unable to verify your email, please try again");
+        }
     }
 
     public static String generate6DigitRandomCode() {
