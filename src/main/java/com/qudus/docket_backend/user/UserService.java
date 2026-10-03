@@ -16,9 +16,10 @@ import java.util.concurrent.ExecutionException;
 public class UserService {
     private final Firestore db;
     private final Logger log = LoggerFactory.getLogger(UserService.class);
+    private final FirebaseAuth firebaseAuth;
 
-    public UserService(Firestore db) {
-        this.db = db;
+    public UserService(Firestore db, FirebaseAuth firebaseAuth) {
+        this.db = db; this.firebaseAuth = firebaseAuth;
     }
 
     public UserResponse createUser(String userId, CreateUserRequest request) {
@@ -32,10 +33,10 @@ public class UserService {
                return parsedUser.toResponse();
             }
 
-            UserRecord userRecord = FirebaseAuth.getInstance().getUser(userId);
+            UserRecord userRecord = firebaseAuth.getUser(userId);
             long creationMilli = userRecord.getUserMetadata().getCreationTimestamp();
 
-            User newUser = new User(userId, request.fullName(), request.phone(), request.email(), null, Instant.ofEpochMilli(creationMilli));
+            User newUser = new User(userId, request.fullName(), request.phone(), request.email(), null, Instant.ofEpochMilli(creationMilli), false);
 
             docRef.set(newUser).get();
             log.info("user created successfully for user {}", request.email());

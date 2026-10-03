@@ -10,14 +10,16 @@ public final class User {
     private final String email;
     private final String profilePic;
     private final Instant createdAt;
+    private final boolean emailVerified;
 
-    public User(String userId, String fullName, String phone, String email, String profilePic, Instant createdAt) {
+    public User(String userId, String fullName, String phone, String email, String profilePic, Instant createdAt, boolean emailVerified) {
         this.userId = userId;
         this.fullName = fullName;
         this.phone = phone;
         this.email = email;
         this.profilePic = profilePic;
         this.createdAt = createdAt;
+        this.emailVerified = emailVerified;
     }
 
     public String getUserId() {
@@ -44,8 +46,12 @@ public final class User {
         return createdAt;
     }
 
+    public boolean isEmailVerified() {
+        return emailVerified;
+    }
+
     public UserResponse toResponse() {
-        return new UserResponse(fullName, userId, email, phone, profilePic, createdAt);
+        return new UserResponse(fullName, userId, email, phone, profilePic, createdAt, emailVerified);
     }
 
 }
