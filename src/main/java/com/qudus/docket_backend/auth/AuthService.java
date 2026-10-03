@@ -1,5 +1,6 @@
 package com.qudus.docket_backend.auth;
 
+import com.qudus.docket_backend.email.EmailService;
 import com.qudus.docket_backend.exceptions.AuthException;
 import com.qudus.docket_backend.family.CreateFamilyRequest;
 import com.qudus.docket_backend.family.FamilyResponse;
@@ -20,9 +21,12 @@ public class AuthService {
     private final Logger log = LoggerFactory.getLogger(AuthService.class);
     private final UserService userService;
     private final FamilyService familyService;
-    public  AuthService(UserService userService, FamilyService familyService) {
+    private final EmailService emailService;
+
+    public  AuthService(UserService userService, FamilyService familyService, EmailService emailService) {
         this.userService = userService;
         this.familyService = familyService;
+        this.emailService = emailService;
     }
 
     public AuthResponse register(String userId, @NonNull AuthRequest request) {
@@ -33,6 +37,7 @@ public class AuthService {
         CreateFamilyRequest familyRequest = new CreateFamilyRequest(request.vaultName(), userId);
         UserResponse user = userService.createUser(userId, userRequest);
         FamilyResponse family = familyService.createFamily(familyRequest, userId);
+        String content = "";
         log.info("User {} registered successfully", userId);
         return new AuthResponse(user, List.of(family));
     }
