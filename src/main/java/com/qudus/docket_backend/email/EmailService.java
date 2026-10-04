@@ -27,6 +27,7 @@ public class EmailService {
     public EmailService(@Value("${brevo.api-key}") String apiKey, @Value("${brevo.fromName}") String fromName, @Value("${brevo.fromEmail}") String fromEmail) {
         this.apiClient = Configuration.getDefaultApiClient();
         this.apiClient.setBasePath("https://api.brevo.com/v3");
+        log.info("Api key from properties: {}", apiKey);
         this.apiClient.setApiKey(apiKey);
         ApiKeyAuth apiKeyAuth = (ApiKeyAuth) this.apiClient.getAuthentication("api-key");
         apiKeyAuth.setApiKey(apiKey);
@@ -43,7 +44,7 @@ public class EmailService {
             CreateSmtpEmail response = new TransactionalEmailsApi(apiClient).sendTransacEmail(email);
             log.info("Email dispatched to email: {} with id: {}", toEmail, response.getMessageId());
         } catch (ApiException e) {
-            log.error("Failed to dispatch email to email: {} {} code={}", toEmail, e.getMessage(), e.getCode());
+            log.error("Failed to dispatch email to email: {} {} code={}", toEmail, e.getResponseBody(), e.getCode());
         }
     }
 
