@@ -4,6 +4,7 @@ import com.google.cloud.firestore.Firestore;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.HttpStatusCode;
 import org.springframework.stereotype.Service;
 
 import java.time.Instant;
@@ -25,13 +26,23 @@ public class FamilyService {
         try {
             String id = UUID.randomUUID().toString();
             var docRef = db.collection("families").document(id);
-            Family newFamily = new Family(request.name(), userId, id, null, 1, Instant.now().toString(), List.of(new FamilyMember(userId, Role.OWNER, Instant.now().toString())));
+            Family newFamily = new Family(request.name(), userId, id, null, 1, Instant.now().toString(), List.of(new FamilyMember(userId, Role.OWNER, Instant.now().toString())), List.of(userId));
             docRef.set(newFamily).get();
             log.info("New family created for user {}", userId);
             return newFamily.toResponse();
         } catch (ExecutionException | InterruptedException e) {
-            log.error("Failed to create family for user {}", userId);
-            throw new FamilyException("Failed to create family: " + request.name(), HttpStatus.INTERNAL_SERVER_ERROR.value(), "unknown_error");
+            log.error("Failed to create family for user {} with error: {}", userId, e.getMessage());
+            throw new FamilyException("Failed to create family: " + request.name(), HttpStatus.INTERNAL_SERVER_ERROR.value(), "server_error");
+        }
+    }
+
+    public List<FamilyResponse> getFamilies(String userId) {
+        try {
+            var querySnapShot = db.collection("families").whereArrayContains("memberIds", userId).get().get();
+            return querySnapShot.getDocuments().stream().map(doc -> doc.toObject(Family.class).toResponse()).toList();
+        } catch (ExecutionException | InterruptedException e) {
+            log.error("Failed to get families for user: {} with error: {}", userId, e.getMessage());
+            throw new FamilyException("Failed to fetch your families", HttpStatus.INTERNAL_SERVER_ERROR.value(), "server_error");
         }
     }
 }

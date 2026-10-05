@@ -12,8 +12,9 @@ public final class Family {
     private final long memberCount;
     private final String createdAt;
     private final List<FamilyMember> members;
+    private final List<String> memberIds;
 
-    public Family(String name, String ownerId, String id, String pic, long memberCount, String createdAt, List<FamilyMember> members) {
+    public Family(String name, String ownerId, String id, String pic, long memberCount, String createdAt, List<FamilyMember> members, List<String> memberIds) {
         this.name = name;
         this.ownerId = ownerId;
         this.id = id;
@@ -21,6 +22,7 @@ public final class Family {
         this.memberCount = memberCount;
         this.createdAt = createdAt;
         this.members = members;
+        this.memberIds = memberIds;
     }
 
     public String getName() {
@@ -49,6 +51,10 @@ public final class Family {
 
     public List<FamilyMember> getMembers() {
         return members;
+    }
+
+    public List<String> getMemberIds() {
+        return memberIds;
     }
 
     public FamilyResponse toResponse() {

@@ -27,7 +27,6 @@ public class EmailService {
     public EmailService(@Value("${brevo.api-key}") String apiKey, @Value("${brevo.fromName}") String fromName, @Value("${brevo.fromEmail}") String fromEmail) {
         this.apiClient = Configuration.getDefaultApiClient();
         this.apiClient.setBasePath("https://api.brevo.com/v3");
-        log.info("Api key from properties: {}", apiKey);
         this.apiClient.setApiKey(apiKey);
         ApiKeyAuth apiKeyAuth = (ApiKeyAuth) this.apiClient.getAuthentication("api-key");
         apiKeyAuth.setApiKey(apiKey);
