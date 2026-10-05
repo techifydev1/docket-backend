@@ -1,6 +1,9 @@
 package com.qudus.docket_backend.family;
 
 import com.google.cloud.firestore.Firestore;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseAuthException;
+import com.google.firebase.auth.UserRecord;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
@@ -25,13 +28,16 @@ public class FamilyService {
         try {
             String id = UUID.randomUUID().toString();
             var docRef = db.collection("families").document(id);
-            Family newFamily = new Family(request.name(), userId, id, null, 1, Instant.now().toString(), List.of(new FamilyMember(userId, Role.OWNER, Instant.now().toString())), List.of(userId));
+            UserRecord userRecord = FirebaseAuth.getInstance().getUser(userId);
+            Family newFamily = new Family(request.name(), userId, id, null, 1, Instant.now().toString(), List.of(new FamilyMember(request.ownerName(), userId, Role.OWNER, Instant.now().toString(), userRecord.getPhotoUrl())), List.of(userId));
             docRef.set(newFamily).get();
             log.info("New family created for user {}", userId);
             return newFamily.toResponse();
         } catch (ExecutionException | InterruptedException e) {
             log.error("Failed to create family for user {} with error: {}", userId, e.getMessage());
             throw new FamilyException("Failed to create family: " + request.name(), HttpStatus.INTERNAL_SERVER_ERROR.value(), "server_error");
+        } catch (FirebaseAuthException e) {
+            throw new RuntimeException(e);
         }
     }
 

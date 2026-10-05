@@ -60,6 +60,6 @@ public final class Family {
     }
 
     public FamilyResponse toResponse() {
-        return new FamilyResponse(name, id, pic, memberCount, createdAt);
+        return new FamilyResponse(name, id, pic, memberCount, createdAt, members.stream().map(FamilyMember::toResponse).toList());
     }
 }

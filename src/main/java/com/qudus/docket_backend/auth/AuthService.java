@@ -46,7 +46,7 @@ public class AuthService {
             throw new AuthException("Full name, Email or Phone number cannot be empty");
         }
         CreateUserRequest userRequest = new CreateUserRequest(request.fullName(), request.email(), request.phone(), false);
-        CreateFamilyRequest familyRequest = new CreateFamilyRequest(request.vaultName(), userId);
+        CreateFamilyRequest familyRequest = new CreateFamilyRequest(request.vaultName(), request.fullName());
         UserResponse user = userService.createUser(userId, userRequest);
         FamilyResponse family = familyService.createFamily(familyRequest, userId);
         generateACodeAndSendEmail(request.email());
