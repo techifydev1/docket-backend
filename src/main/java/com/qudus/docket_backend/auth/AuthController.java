@@ -31,4 +31,9 @@ public class AuthController {
         String email = token.getEmail();
         return ResponseEntity.status(HttpStatus.OK).body(authService.verifyEmail(userId, email, request));
     }
+
+    @PostMapping("/send-verification-email")
+    public ResponseEntity<Map<String, String>> handleSendEmailVerificationCode(@AuthenticationPrincipal FirebaseToken token) {
+        return ResponseEntity.status(HttpStatus.OK).body(authService.requestEmailVerificationCode(token.getUid()));
+    }
 }

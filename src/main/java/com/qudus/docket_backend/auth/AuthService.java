@@ -49,8 +49,14 @@ public class AuthService {
         CreateFamilyRequest familyRequest = new CreateFamilyRequest(request.vaultName(), userId);
         UserResponse user = userService.createUser(userId, userRequest);
         FamilyResponse family = familyService.createFamily(familyRequest, userId);
+        generateACodeAndSendEmail(request.email());
+        log.info("User {} registered successfully", userId);
+        return new AuthResponse(user, List.of(family));
+    }
+
+    private void generateACodeAndSendEmail(@NonNull String email) {
         String code = generate6DigitRandomCode();
-        verificationService.saveVerificationCode(request.email(), code);
+        verificationService.saveVerificationCode(email, code);
         String content = """
                 <h1>Welcome to Docket!</h1>
                 <p>Here's your 6 digit verification code</p>
@@ -62,9 +68,18 @@ public class AuthService {
                 <p>Best regards,</p>
                 <p>Docket team.</p>
                 """.formatted(code);
-        emailService.sendEmail(request.email(), content);
-        log.info("User {} registered successfully", userId);
-        return new AuthResponse(user, List.of(family));
+        emailService.sendEmail(email, content);
+    }
+
+    public Map<String, String> requestEmailVerificationCode(@NonNull String userId) {
+        try {
+            UserRecord userRecord = FirebaseAuth.getInstance().getUser(userId);
+            generateACodeAndSendEmail(userRecord.getEmail());
+            return Map.of("message", "Email verification sent successfully");
+        } catch (FirebaseAuthException e) {
+            log.error("Unable to send user a verification code user: {}", userId);
+            throw new AuthException("Unable to send a verification code, please try again in 2 mins");
+        }
     }
 
     public Map<String, String> verifyEmail(String userId, String email, @NonNull VerifyEmailRequest request) {
