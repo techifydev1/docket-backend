@@ -1,6 +1,7 @@
 package com.qudus.docket_backend.exceptions;
 
 import com.qudus.docket_backend.family.FamilyException;
+import com.qudus.docket_backend.user.NoUserException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -19,5 +20,10 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(FamilyException.class)
     public  ResponseEntity<ErrorResponse> handleFamilyException(FamilyException exception) {
         return ResponseEntity.status(Objects.requireNonNull(HttpStatus.resolve(exception.getStatusCode()))).body(ErrorResponse.of(exception.getErrorCode(), exception.getMessage()));
+    }
+
+    @ExceptionHandler(NoUserException.class)
+    public ResponseEntity<ErrorResponse> handleNoUserException(NoUserException exception) {
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ErrorResponse.of("unauthorized", exception.getMessage()));
     }
 }
