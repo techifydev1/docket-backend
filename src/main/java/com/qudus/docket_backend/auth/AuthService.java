@@ -45,8 +45,11 @@ public class AuthService {
         if (request.fullName().isEmpty() || request.email().isEmpty() || request.phone().isEmpty()) {
             throw new AuthException("Full name, Email or Phone number cannot be empty");
         }
-        CreateUserRequest userRequest = new CreateUserRequest(request.fullName(), request.email(), request.phone(), false);
-        CreateFamilyRequest familyRequest = new CreateFamilyRequest(request.vaultName(), request.fullName());
+        if (request.publicKey() == null || request.publicKey().isBlank()) {
+            throw new AuthException("Your encryption key is missing, please try registering again");
+        }
+        CreateUserRequest userRequest = new CreateUserRequest(request.fullName(), request.email(), request.phone(), false, request.publicKey());
+        CreateFamilyRequest familyRequest = new CreateFamilyRequest(request.vaultName(), request.fullName(), request.wrappedFamilyKey());
         UserResponse user = userService.createUser(userId, userRequest);
         FamilyResponse family = familyService.createFamily(familyRequest, userId);
         generateACodeAndSendEmail(request.email());

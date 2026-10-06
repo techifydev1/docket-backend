@@ -11,6 +11,7 @@ import org.springframework.stereotype.Service;
 
 import java.time.Instant;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 
@@ -29,7 +30,10 @@ public class FamilyService {
             String id = UUID.randomUUID().toString();
             var docRef = db.collection("families").document(id);
             UserRecord userRecord = FirebaseAuth.getInstance().getUser(userId);
-            Family newFamily = new Family(request.name(), userId, id, null, 1, Instant.now().toString(), List.of(new FamilyMember(request.ownerName(), userId, Role.OWNER, Instant.now().toString(), userRecord.getPhotoUrl())), List.of(userId));
+            Map<String, String> wrappedKeys = request.wrappedFamilyKey() == null || request.wrappedFamilyKey().isBlank()
+                    ? Map.of()
+                    : Map.of(userId, request.wrappedFamilyKey());
+            Family newFamily = new Family(request.name(), userId, id, null, 1, Instant.now().toString(), List.of(new FamilyMember(request.ownerName(), userId, Role.OWNER, Instant.now().toString(), userRecord.getPhotoUrl())), List.of(userId), wrappedKeys);
             docRef.set(newFamily).get();
             log.info("New family created for user {}", userId);
             return newFamily.toResponse();

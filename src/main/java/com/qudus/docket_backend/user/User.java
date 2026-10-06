@@ -4,15 +4,18 @@ import java.time.Instant;
 import java.util.Objects;
 
 public final class User {
-    private final String userId;
-    private final String fullName;
-    private final String phone;
-    private final String email;
-    private final String profilePic;
-    private final Instant createdAt;
-    private final boolean emailVerified;
+    private String userId;
+    private String fullName;
+    private String phone;
+    private String email;
+    private String profilePic;
+    private Instant createdAt;
+    private boolean emailVerified;
+    private String publicKey;
 
-    public User(String userId, String fullName, String phone, String email, String profilePic, Instant createdAt, boolean emailVerified) {
+    public User() {}
+
+    public User(String userId, String fullName, String phone, String email, String profilePic, Instant createdAt, boolean emailVerified, String publicKey) {
         this.userId = userId;
         this.fullName = fullName;
         this.phone = phone;
@@ -20,6 +23,7 @@ public final class User {
         this.profilePic = profilePic;
         this.createdAt = createdAt;
         this.emailVerified = emailVerified;
+        this.publicKey = publicKey;
     }
 
     public String getUserId() {
@@ -44,6 +48,10 @@ public final class User {
 
     public Instant getCreatedAt() {
         return createdAt;
+    }
+
+    public String getPublicKey() {
+        return publicKey;
     }
 
     public boolean isEmailVerified() {

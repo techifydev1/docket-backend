@@ -36,7 +36,7 @@ public class UserService {
             UserRecord userRecord = firebaseAuth.getUser(userId);
             long creationMilli = userRecord.getUserMetadata().getCreationTimestamp();
 
-            User newUser = new User(userId, request.fullName(), request.phone(), request.email(), null, Instant.ofEpochMilli(creationMilli), false);
+            User newUser = new User(userId, request.fullName(), request.phone(), request.email(), null, Instant.ofEpochMilli(creationMilli), false, request.publicKey());
 
             docRef.set(newUser).get();
             log.info("user created successfully for user {}", request.email());
