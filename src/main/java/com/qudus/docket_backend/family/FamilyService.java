@@ -54,4 +54,26 @@ public class FamilyService {
             throw new FamilyException("Failed to fetch your families", HttpStatus.INTERNAL_SERVER_ERROR.value(), "server_error");
         }
     }
+
+    public boolean isUserInAFamily(String familyId, String userId) {
+        try {
+            var familyDocRef = db.collection("families").document(familyId);
+            var snapShot = familyDocRef.get().get();
+            if(snapShot.exists()) {
+                List<String> memberIds = (List<String>) snapShot.get("memberIds");
+                return memberIds != null && memberIds.contains(userId);
+            }
+            return false;
+        } catch (ExecutionException | InterruptedException e) {
+            return false;
+        }
+    }
+
+    public boolean hasEditAccess(String familyId, String userId) {
+        try {
+            var familyDocRef = db.collection("families").document(familyId);
+            var snapshot = familyDocRef.get().get();
+
+        }
+    }
 }

@@ -1,5 +1,6 @@
 package com.qudus.docket_backend.exceptions;
 
+import com.qudus.docket_backend.cloudinary.CloudinaryException;
 import com.qudus.docket_backend.family.FamilyException;
 import com.qudus.docket_backend.user.NoUserException;
 import org.springframework.http.HttpStatus;
@@ -25,5 +26,10 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(NoUserException.class)
     public ResponseEntity<ErrorResponse> handleNoUserException(NoUserException exception) {
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ErrorResponse.of("unauthorized", exception.getMessage()));
+    }
+
+    @ExceptionHandler(CloudinaryException.class)
+    public ResponseEntity<ErrorResponse> handleCloudinaryException(CloudinaryException exception) {
+        return ResponseEntity.status(exception.getStatus()).body(ErrorResponse.of(exception.getErrorCode(), exception.getMessage()));
     }
 }
