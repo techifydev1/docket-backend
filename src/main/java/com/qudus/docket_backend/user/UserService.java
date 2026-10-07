@@ -33,10 +33,12 @@ public class UserService {
                return parsedUser.toResponse();
             }
 
-            UserRecord userRecord = firebaseAuth.getUser(userId);
+            UserRecord.UpdateRequest req = new UserRecord.UpdateRequest(userId).setDisplayName(request.fullName());
+
+            UserRecord userRecord = firebaseAuth.updateUser(req);
             long creationMilli = userRecord.getUserMetadata().getCreationTimestamp();
 
-            User newUser = new User(userId, request.fullName(), request.phone(), request.email(), null, Instant.ofEpochMilli(creationMilli), false, request.publicKey());
+            User newUser = new User(userId, userRecord.getDisplayName(), request.phone(), request.email(), null, Instant.ofEpochMilli(creationMilli), false, request.publicKey());
 
             docRef.set(newUser).get();
             log.info("user created successfully for user {}", request.email());
