@@ -30,13 +30,13 @@ public class FamilyService {
             String id = UUID.randomUUID().toString();
             var docRef = db.collection("families").document(id);
             UserRecord userRecord = FirebaseAuth.getInstance().getUser(userId);
-            Map<String, String> wrappedKeys = request.wrappedFamilyKey() == null || request.wrappedFamilyKey().isBlank()
+            Map<String, Map<String, String>> wrappedKeys = request.wrappedFamilyKey() == null || request.wrappedFamilyKey().isBlank()
                     ? Map.of()
-                    : Map.of(userId, request.wrappedFamilyKey());
-            Family newFamily = new Family(request.name(), userId, id, null, 1, Instant.now().toString(), List.of(new FamilyMember(request.ownerName(), userId, Role.OWNER, Instant.now().toString(), userRecord.getPhotoUrl())), List.of(userId), wrappedKeys);
+                    : Map.of(userId, Map.of(String.valueOf(Family.INITIAL_KEY_VERSION), request.wrappedFamilyKey()));
+            Family newFamily = new Family(request.name(), userId, id, null, 1, Instant.now().toString(), List.of(new FamilyMember(request.ownerName(), userId, Role.OWNER, Instant.now().toString(), userRecord.getPhotoUrl())), List.of(userId), Family.INITIAL_KEY_VERSION, wrappedKeys);
             docRef.set(newFamily).get();
             log.info("New family created for user {}", userId);
-            return newFamily.toResponse();
+            return newFamily.toResponse(userId);
         } catch (ExecutionException | InterruptedException e) {
             log.error("Failed to create family for user {} with error: {}", userId, e.getMessage());
             throw new FamilyException("Failed to create family: " + request.name(), HttpStatus.INTERNAL_SERVER_ERROR.value(), "server_error");
@@ -48,7 +48,7 @@ public class FamilyService {
     public List<FamilyResponse> getFamilies(String userId) {
         try {
             var querySnapShot = db.collection("families").whereArrayContains("memberIds", userId).get().get();
-            return querySnapShot.getDocuments().stream().map(doc -> doc.toObject(Family.class).toResponse()).toList();
+            return querySnapShot.getDocuments().stream().map(doc -> doc.toObject(Family.class).toResponse(userId)).toList();
         } catch (ExecutionException | InterruptedException e) {
             log.error("Failed to get families for user: {} with error: {}", userId, e.getMessage());
             throw new FamilyException("Failed to fetch your families", HttpStatus.INTERNAL_SERVER_ERROR.value(), "server_error");

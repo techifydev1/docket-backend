@@ -5,6 +5,8 @@ import java.util.List;
 import java.util.Map;
 
 public final class Family {
+    public static final int INITIAL_KEY_VERSION = 1;
+
     private String name;
     private String ownerId;
     private String id;
@@ -13,11 +15,12 @@ public final class Family {
     private String createdAt;
     private List<FamilyMember> members;
     private List<String> memberIds;
-    private Map<String, String> wrappedKeys;
+    private int keyVersion;
+    private Map<String, Map<String, String>> wrappedKeys;
 
     public Family() {}
 
-    public Family(String name, String ownerId, String id, String pic, long memberCount, String createdAt, List<FamilyMember> members, List<String> memberIds, Map<String, String> wrappedKeys) {
+    public Family(String name, String ownerId, String id, String pic, long memberCount, String createdAt, List<FamilyMember> members, List<String> memberIds, int keyVersion, Map<String, Map<String, String>> wrappedKeys) {
         this.name = name;
         this.ownerId = ownerId;
         this.id = id;
@@ -26,6 +29,7 @@ public final class Family {
         this.createdAt = createdAt;
         this.members = members;
         this.memberIds = memberIds;
+        this.keyVersion = keyVersion;
         this.wrappedKeys = wrappedKeys;
     }
 
@@ -61,11 +65,22 @@ public final class Family {
         return memberIds;
     }
 
-    public Map<String, String> getWrappedKeys() {
+    public int getKeyVersion() {
+        return keyVersion;
+    }
+
+    public Map<String, Map<String, String>> getWrappedKeys() {
         return wrappedKeys;
     }
 
-    public FamilyResponse toResponse() {
-        return new FamilyResponse(name, id, pic, memberCount, createdAt, members.stream().map(FamilyMember::toResponse).toList(), wrappedKeys);
+    public FamilyResponse toResponse(String userId) {
+        String wrappedKey = null;
+        if (wrappedKeys != null) {
+            Map<String, String> memberKeys = wrappedKeys.get(userId);
+            if (memberKeys != null) {
+                wrappedKey = memberKeys.get(String.valueOf(keyVersion));
+            }
+        }
+        return new FamilyResponse(name, id, pic, memberCount, createdAt, members.stream().map(FamilyMember::toResponse).toList(), keyVersion, wrappedKey);
     }
 }
