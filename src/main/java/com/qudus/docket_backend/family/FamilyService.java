@@ -12,6 +12,7 @@ import org.springframework.stereotype.Service;
 import java.time.Instant;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 
@@ -56,24 +57,32 @@ public class FamilyService {
     }
 
     public boolean isUserInAFamily(String familyId, String userId) {
-        try {
-            var familyDocRef = db.collection("families").document(familyId);
-            var snapShot = familyDocRef.get().get();
-            if(snapShot.exists()) {
-                List<String> memberIds = (List<String>) snapShot.get("memberIds");
-                return memberIds != null && memberIds.contains(userId);
-            }
-            return false;
-        } catch (ExecutionException | InterruptedException e) {
-            return false;
-        }
+        return getUserRoleInAFamily(familyId, userId).isPresent();
     }
 
-    public boolean hasEditAccess(String familyId, String userId) {
+    public boolean hasUploadAccess(String familyId, String userId) {
+        var optionalRole = getUserRoleInAFamily(familyId, userId);
+        if(optionalRole.isEmpty()) return false;
+        Role role = optionalRole.get();
+        return role.equals(Role.OWNER) || role.equals(Role.ADMIN) || role.equals(Role.MEMBER);
+    }
+
+    private Optional<Role> getUserRoleInAFamily(String familyId, String userId) {
         try {
             var familyDocRef = db.collection("families").document(familyId);
             var snapshot = familyDocRef.get().get();
-
+            if(!snapshot.exists()) return Optional.empty();
+            Family family = snapshot.toObject(Family.class);
+            FamilyMember member = family.getMembers().stream().filter(familyMember -> userId.equals(familyMember.userId())).findFirst().orElse(null);
+            if(member == null) {
+                return Optional.empty();
+            }
+            return Optional.of(member.role());
+        } catch (ExecutionException | InterruptedException e) {
+            log.error("Role lookup failed for family: {} - member: {}", familyId, userId);
+            return Optional.empty();
         }
     }
+
+
 }

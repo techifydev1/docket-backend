@@ -1,21 +1,44 @@
 package com.qudus.docket_backend.document;
 
 import com.google.cloud.firestore.Firestore;
+import com.qudus.docket_backend.cloudinary.CloudinaryException;
+import com.qudus.docket_backend.cloudinary.CloudinaryService;
+import com.qudus.docket_backend.family.Family;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
-import java.util.HashMap;
+import java.time.Instant;
 import java.util.Map;
+import java.util.concurrent.ExecutionException;
 
 @Service
 public class DocumentService {
+    private final CloudinaryService cloudinaryService;
     private final Firestore db;
-    public DocumentService(Firestore db) {
+
+    public DocumentService(CloudinaryService cloudinaryService, Firestore db) {
+        this.cloudinaryService = cloudinaryService;
         this.db = db;
     }
 
-    public void upload(String familyId, String userId) {
-        var docRef = db.collection("documents").document(familyId).collection("users").document(userId);
-        Map<String, Object> data = new HashMap<>();
-        data.put("documentId", )
+    public Map<String, Object> getSignedUrl(String familyId, String userId) {
+        return cloudinaryService.createSignedUrl(familyId, userId);
+    }
+
+    public void confirmUpload(String familyId, String userId, ConfirmRequest request) {
+        try {
+            if(!cloudinaryService.isSignatureValid(familyId, userId, request.cloudinaryVersion(), request.docId(), request.signature())) throw new CloudinaryException("invalid_upload_signature", "Upload could not be verified", HttpStatus.BAD_REQUEST);
+            var fileRef = db.collection("documents").document(familyId).collection("users").document(userId).collection("files").document(request.docId());
+            var familyRef = db.collection("families").document(familyId);
+            db.runTransaction(tx -> {
+                var family = tx.get(familyRef).get().toObject(Family.class);
+                var currentKey = family.getKeyVersion();
+                if(currentKey != Integer.decode(request.kv())) throw new CloudinaryException("key_version_stale", "The family key changed. Re-encrypt and upload again.", HttpStatus.CONFLICT);
+                tx.create(fileRef, new Document(request.encryptedMetadata(), Integer.decode(request.kv()), userId, Instant.now().toString()));
+                return null;
+            }).get();
+        } catch (ExecutionException | InterruptedException e) {
+            throw new CloudinaryException("interna_server_error", "An unknown error occurred, please try again", HttpStatus.INTERNAL_SERVER_ERROR);
+        }
     }
 }
