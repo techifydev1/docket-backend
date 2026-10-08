@@ -54,7 +54,7 @@ public class CloudinaryService {
         if(!familyService.hasUploadAccess(familyId, userId)) throw new CloudinaryException("upload_forbidden", "You don't have permission to upload to this family", HttpStatus.FORBIDDEN);
         String publicId = familyId + "/" + docId;
         Map<String, Object> toSign = new HashMap<>();
-        toSign.put("publicId", publicId);
+        toSign.put("public_id", publicId);
         toSign.put("version", cloudinaryVersion);
 
         String expected = cloudinary.apiSignRequest(toSign, apiSecret, 1);

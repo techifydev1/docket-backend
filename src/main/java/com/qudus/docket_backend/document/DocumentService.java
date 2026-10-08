@@ -4,6 +4,7 @@ import com.google.cloud.firestore.Firestore;
 import com.qudus.docket_backend.cloudinary.CloudinaryException;
 import com.qudus.docket_backend.cloudinary.CloudinaryService;
 import com.qudus.docket_backend.family.Family;
+import com.qudus.docket_backend.family.FamilyService;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
@@ -14,10 +15,12 @@ import java.util.concurrent.ExecutionException;
 @Service
 public class DocumentService {
     private final CloudinaryService cloudinaryService;
+    private final FamilyService familyService;
     private final Firestore db;
 
-    public DocumentService(CloudinaryService cloudinaryService, Firestore db) {
+    public DocumentService(CloudinaryService cloudinaryService, FamilyService familyService, Firestore db) {
         this.cloudinaryService = cloudinaryService;
+        this.familyService = familyService;
         this.db = db;
     }
 
@@ -27,6 +30,7 @@ public class DocumentService {
 
     public void confirmUpload(String familyId, String userId, ConfirmRequest request) {
         try {
+            if(!userId.equals(request.ownerId()) && !familyService.canUploadForOthers(familyId, userId)) throw new CloudinaryException("cannot_upload_for_others", "Only admins and the vault owner can add documents for someone else", HttpStatus.FORBIDDEN);
             if(!cloudinaryService.isSignatureValid(familyId, userId, request.cloudinaryVersion(), request.docId(), request.signature())) throw new CloudinaryException("invalid_upload_signature", "Upload could not be verified", HttpStatus.BAD_REQUEST);
             var fileRef = db.collection("documents").document(familyId).collection("users").document(userId).collection("files").document(request.docId());
             var familyRef = db.collection("families").document(familyId);
@@ -34,7 +38,7 @@ public class DocumentService {
                 var family = tx.get(familyRef).get().toObject(Family.class);
                 var currentKey = family.getKeyVersion();
                 if(currentKey != Integer.decode(request.kv())) throw new CloudinaryException("key_version_stale", "The family key changed. Re-encrypt and upload again.", HttpStatus.CONFLICT);
-                tx.create(fileRef, new Document(request.encryptedMetadata(), Integer.decode(request.kv()), userId, Instant.now().toString()));
+                tx.create(fileRef, new Document(request.encryptedMetadata(), Integer.decode(request.kv()), userId, Instant.now().toString(), request.ownerId()));
                 return null;
             }).get();
         } catch (ExecutionException | InterruptedException e) {

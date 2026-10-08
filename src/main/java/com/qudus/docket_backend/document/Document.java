@@ -5,12 +5,14 @@ public class Document {
     private int kv;
     private String by;
     private String at;
+    private String ownerId;
 
-    public Document(String meta, int kv, String by, String at) {
+    public Document(String meta, int kv, String by, String at, String ownerId) {
         this.meta = meta;
         this.kv = kv;
         this.by = by;
         this.at = at;
+        this.ownerId = ownerId;
     }
 
     public Document() {
@@ -30,5 +32,9 @@ public class Document {
 
     public String getAt() {
         return at;
+    }
+
+    public String getOwnerId() {
+        return ownerId;
     }
 }

@@ -67,6 +67,13 @@ public class FamilyService {
         return role.equals(Role.OWNER) || role.equals(Role.ADMIN) || role.equals(Role.MEMBER);
     }
 
+    public boolean canUploadForOthers(String familyId, String userId) {
+        var optionalRole = getUserRoleInAFamily(familyId, userId);
+        if(optionalRole.isEmpty()) return false;
+        Role role = optionalRole.get();
+        return role.equals(Role.OWNER) || role.equals(Role.ADMIN);
+    }
+
     private Optional<Role> getUserRoleInAFamily(String familyId, String userId) {
         try {
             var familyDocRef = db.collection("families").document(familyId);
