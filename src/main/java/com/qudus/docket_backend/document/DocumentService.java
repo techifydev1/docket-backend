@@ -1,6 +1,7 @@
 package com.qudus.docket_backend.document;
 
 import com.google.cloud.firestore.Firestore;
+import com.google.cloud.firestore.Query;
 import com.qudus.docket_backend.cloudinary.CloudinaryException;
 import com.qudus.docket_backend.cloudinary.CloudinaryService;
 import com.qudus.docket_backend.family.Family;
@@ -50,7 +51,8 @@ public class DocumentService {
 
     public List<DocumentResponse> getUserDocumentsInAFamily(String userId, String familyId) {
         try {
-            var docRef = db.collection("families").document(familyId).collection("documents");
+            if(!familyService.isUserInAFamily(familyId, userId)) throw new CloudinaryException("not_in_family", "You are not a member of this family", HttpStatus.FORBIDDEN);
+            var docRef = db.collection("families").document(familyId).collection("documents").orderBy("addedAt", Query.Direction.DESCENDING);
             var snapshot = docRef.get().get();
             return snapshot.getDocuments().stream().map(d -> {
                 Document doc = d.toObject(Document.class);
