@@ -1,7 +1,6 @@
 package com.qudus.docket_backend.cloudinary;
 
 import com.cloudinary.Cloudinary;
-import com.qudus.docket_backend.document.ConfirmRequest;
 import com.qudus.docket_backend.family.FamilyService;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
@@ -50,9 +49,8 @@ public class CloudinaryService {
 
     }
 
-    public boolean isSignatureValid(String familyId, String userId, String cloudinaryVersion, String docId, String signature) {
+    public boolean isSignatureValid(String familyId, String userId, String publicId, String cloudinaryVersion, String signature) {
         if(!familyService.hasUploadAccess(familyId, userId)) throw new CloudinaryException("upload_forbidden", "You don't have permission to upload to this family", HttpStatus.FORBIDDEN);
-        String publicId = familyId + "/" + docId;
         Map<String, Object> toSign = new HashMap<>();
         toSign.put("public_id", publicId);
         toSign.put("version", cloudinaryVersion);

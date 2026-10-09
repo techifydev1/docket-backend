@@ -1,40 +1,52 @@
 package com.qudus.docket_backend.document;
 
 public class Document {
-    private String meta;
-    private int kv;
-    private String by;
-    private String at;
+    private String encryptedMetadata;
+    private int keyVersion;
+    private String addedBy;
+    private String addedAt;
     private String ownerId;
+    private String publicId;
+    private String cloudinaryVersion;
 
-    public Document(String meta, int kv, String by, String at, String ownerId) {
-        this.meta = meta;
-        this.kv = kv;
-        this.by = by;
-        this.at = at;
+    public Document(String encryptedMetadata, int keyVersion, String addedBy, String addedAt, String ownerId, String publicId, String cloudinaryVersion) {
+        this.encryptedMetadata = encryptedMetadata;
+        this.keyVersion = keyVersion;
+        this.addedBy = addedBy;
+        this.addedAt = addedAt;
         this.ownerId = ownerId;
+        this.publicId = publicId;
+        this.cloudinaryVersion = cloudinaryVersion;
     }
 
     public Document() {
     }
 
-    public String getMeta() {
-        return meta;
+    public String getEncryptedMetadata() {
+        return encryptedMetadata;
     }
 
-    public long getKv() {
-        return kv;
+    public long getKeyVersion() {
+        return keyVersion;
     }
 
-    public String getBy() {
-        return by;
+    public String getAddedBy() {
+        return addedBy;
     }
 
-    public String getAt() {
-        return at;
+    public String getAddedAt() {
+        return addedAt;
     }
 
     public String getOwnerId() {
         return ownerId;
+    }
+
+    public String getPublicId() {
+        return publicId;
+    }
+
+    public String getCloudinaryVersion() {
+        return cloudinaryVersion;
     }
 }

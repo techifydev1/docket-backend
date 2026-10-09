@@ -33,12 +33,13 @@ public class DocumentController {
     public ResponseEntity<Map<String, String>> handleConfirmUploadRequest(@AuthenticationPrincipal FirebaseToken token, @RequestBody ConfirmRequest request) {
         if (request.familyId() == null || request.familyId().isBlank()
                 || request.docId() == null || request.docId().isBlank()
+                || request.publicId() == null || request.publicId().isBlank()
                 || request.cloudinaryVersion() == null || request.cloudinaryVersion().isBlank()
                 || request.signature() == null || request.signature().isBlank()
                 || request.encryptedMetadata() == null || request.encryptedMetadata().isBlank()
                 || request.kv() == null || request.kv().isBlank()
                 || request.ownerId() == null || request.ownerId().isBlank()) {
-            throw new CloudinaryException("invalid_confirm_request", "familyId, docId, cloudinaryVersion, signature, encryptedMetadata, kv and ownerId are required", HttpStatus.BAD_REQUEST);
+            throw new CloudinaryException("invalid_confirm_request", "familyId, docId, publicId, cloudinaryVersion, signature, encryptedMetadata, kv and ownerId are required", HttpStatus.BAD_REQUEST);
         }
         documentService.confirmUpload(request.familyId().trim(), token.getUid(), request);
         return ResponseEntity.status(HttpStatus.OK).body(Map.of("message", "Upload confirmed"));
