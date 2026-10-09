@@ -5,6 +5,7 @@ import com.qudus.docket_backend.cloudinary.CloudinaryException;
 import com.qudus.docket_backend.cloudinary.CloudinaryService;
 import com.qudus.docket_backend.family.Family;
 import com.qudus.docket_backend.family.FamilyService;
+import org.jspecify.annotations.NonNull;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
@@ -29,7 +30,7 @@ public class DocumentService {
         return cloudinaryService.createSignedUrl(familyId, userId);
     }
 
-    public void confirmUpload(String familyId, String userId, ConfirmRequest request) {
+    public void confirmUpload(String familyId, @NonNull String userId, @NonNull ConfirmRequest request) {
         try {
             if(!userId.equals(request.ownerId()) && !familyService.canUploadForOthers(familyId, userId)) throw new CloudinaryException("cannot_upload_for_others", "Only admins and the vault owner can add documents for someone else", HttpStatus.FORBIDDEN);
             if(!cloudinaryService.isSignatureValid(familyId, userId, request.publicId(), request.cloudinaryVersion(), request.signature())) throw new CloudinaryException("invalid_upload_signature", "Upload could not be verified", HttpStatus.BAD_REQUEST);
@@ -47,10 +48,16 @@ public class DocumentService {
         }
     }
 
-//    public List<DocumentResponse> getUserDocumentsInAFamily(String userId, String familyId) {
-//        try {
-//            if(!familyService.isUserInAFamily(familyId, userId)) throw new CloudinaryException("not_in_the_family","You are not in the requested family", HttpStatus.FORBIDDEN);
-//            var files = db.collectionGroup("Files").whereEqualTo("familyId", familyId)
-//        }
-//    }
+    public List<DocumentResponse> getUserDocumentsInAFamily(String userId, String familyId) {
+        try {
+            var docRef = db.collection("families").document(familyId).collection("documents");
+            var snapshot = docRef.get().get();
+            return snapshot.getDocuments().stream().map(d -> {
+                Document doc = d.toObject(Document.class);
+                return new DocumentResponse(d.getId(), doc.getEncryptedMetadata(), (int) doc.getKeyVersion(), doc.getAddedBy(), doc.getAddedAt(), doc.getOwnerId(), doc.getPublicId(), doc.getCloudinaryVersion());
+            }).toList();
+        } catch (ExecutionException | InterruptedException e) {
+            throw new RuntimeException(e);
+        }
+    }
 }

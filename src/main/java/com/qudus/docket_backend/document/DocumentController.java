@@ -5,11 +5,9 @@ import com.qudus.docket_backend.cloudinary.CloudinaryException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
 import java.util.Map;
 
 @RestController
@@ -43,5 +41,10 @@ public class DocumentController {
         }
         documentService.confirmUpload(request.familyId().trim(), token.getUid(), request);
         return ResponseEntity.status(HttpStatus.OK).body(Map.of("message", "Upload confirmed"));
+    }
+
+    @GetMapping("/{familyId}")
+    public ResponseEntity<List<DocumentResponse>> handleGetDocumentRequest(@AuthenticationPrincipal FirebaseToken token, @PathVariable String familyId) {
+        return ResponseEntity.status(HttpStatus.OK).body(documentService.getUserDocumentsInAFamily(token.getUid(), familyId));
     }
 }
