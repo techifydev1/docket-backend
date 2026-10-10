@@ -71,7 +71,7 @@ public class AuthService {
                 <p>Best regards,</p>
                 <p>Docket team.</p>
                 """.formatted(code);
-        emailService.sendEmail(email, content);
+        emailService.sendEmail(email, "Verify your Docket account", content);
     }
 
     public Map<String, String> requestEmailVerificationCode(@NonNull String userId) {

@@ -35,11 +35,11 @@ public class EmailService {
     }
 
     @Async
-    public void sendEmail(String toEmail, String content) {
+    public void sendEmail(String toEmail, String subject, String content) {
         try {
             SendSmtpEmail email = new SendSmtpEmail()
                     .sender(new SendSmtpEmailSender().name(fromName).email(fromEmail)).to(List.of(new SendSmtpEmailTo().email(toEmail)))
-                    .subject("Verify you docket account").htmlContent(content);
+                    .subject(subject).htmlContent(content);
             CreateSmtpEmail response = new TransactionalEmailsApi(apiClient).sendTransacEmail(email);
             log.info("Email dispatched to email: {} with id: {}", toEmail, response.getMessageId());
         } catch (ApiException e) {

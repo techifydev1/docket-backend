@@ -2,6 +2,7 @@ package com.qudus.docket_backend.exceptions;
 
 import com.qudus.docket_backend.cloudinary.CloudinaryException;
 import com.qudus.docket_backend.family.FamilyException;
+import com.qudus.docket_backend.invitation.InvitationException;
 import com.qudus.docket_backend.user.NoUserException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -30,6 +31,11 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(CloudinaryException.class)
     public ResponseEntity<ErrorResponse> handleCloudinaryException(CloudinaryException exception) {
+        return ResponseEntity.status(exception.getStatus()).body(ErrorResponse.of(exception.getErrorCode(), exception.getMessage()));
+    }
+
+    @ExceptionHandler(InvitationException.class)
+    public ResponseEntity<ErrorResponse> handleInvitationException(InvitationException exception) {
         return ResponseEntity.status(exception.getStatus()).body(ErrorResponse.of(exception.getErrorCode(), exception.getMessage()));
     }
 }
