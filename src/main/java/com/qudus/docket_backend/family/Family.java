@@ -1,6 +1,8 @@
 package com.qudus.docket_backend.family;
 
 import java.time.Instant;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -71,6 +73,24 @@ public final class Family {
 
     public Map<String, Map<String, String>> getWrappedKeys() {
         return wrappedKeys;
+    }
+
+    public void addMember(String memberId, int version, String wrappedKey, FamilyMember member) {
+        Map<String, Map<String, String>> keys = new HashMap<>(wrappedKeys == null ? Map.of() : wrappedKeys);
+        Map<String, String> versions = new HashMap<>(keys.getOrDefault(memberId, Map.of()));
+        versions.put(String.valueOf(version), wrappedKey);
+        keys.put(memberId, versions);
+        this.wrappedKeys = keys;
+
+        List<FamilyMember> updatedMembers = new ArrayList<>(members == null ? List.of() : members);
+        updatedMembers.add(member);
+        this.members = updatedMembers;
+
+        List<String> updatedMemberIds = new ArrayList<>(memberIds == null ? List.of() : memberIds);
+        if (!updatedMemberIds.contains(memberId)) updatedMemberIds.add(memberId);
+        this.memberIds = updatedMemberIds;
+
+        this.memberCount = updatedMembers.size();
     }
 
     public FamilyResponse toResponse(String userId) {
