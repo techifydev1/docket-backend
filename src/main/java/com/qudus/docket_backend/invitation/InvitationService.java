@@ -7,6 +7,7 @@ import com.qudus.docket_backend.family.Family;
 import com.qudus.docket_backend.family.FamilyMember;
 import com.qudus.docket_backend.family.FamilyResponse;
 import com.qudus.docket_backend.family.Role;
+import com.qudus.docket_backend.family.Relation;
 import com.qudus.docket_backend.user.User;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -54,8 +55,24 @@ public class InvitationService {
         }
     }
 
-    public void invite(String inviteeEmail, String userId, String inviteePublicKey, String wrappedFamilyKey, String familyId) {
+    public void invite(String inviteeEmail, String userId, String inviteePublicKey, String wrappedFamilyKey, String familyId, String role, String relation) {
         try {
+            Role memberRole;
+            try {
+                memberRole = Role.valueOf(role);
+            } catch (IllegalArgumentException | NullPointerException e) {
+                throw new InvitationException("Invalid role", HttpStatus.BAD_REQUEST, "invalid_role");
+            }
+            if (memberRole == Role.OWNER) throw new InvitationException("The owner role cannot be assigned", HttpStatus.BAD_REQUEST, "invalid_role");
+
+            Relation memberRelation;
+            try {
+                memberRelation = Relation.valueOf(relation);
+            } catch (IllegalArgumentException | NullPointerException e) {
+                throw new InvitationException("Invalid relation", HttpStatus.BAD_REQUEST, "invalid_relation");
+            }
+            if (memberRelation == Relation.OWNER) throw new InvitationException("The owner relation cannot be assigned", HttpStatus.BAD_REQUEST, "invalid_relation");
+
             var familySnapShot = db.collection("families").document(familyId).get().get();
             if(!familySnapShot.exists()) throw new InvitationException("This family vault no longer exists", HttpStatus.NOT_FOUND, "family_not_found");
             Family family = familySnapShot.toObject(Family.class);
@@ -81,6 +98,8 @@ public class InvitationService {
             inviteInfo.put("status", InvitationStatus.PENDING.name());
             inviteInfo.put("familyId", familyId);
             inviteInfo.put("familyName", family.getName());
+            inviteInfo.put("role", memberRole.name());
+            inviteInfo.put("relation", memberRelation.name());
             inviteInfo.put("createdAt", Instant.now().toString());
 
             var invitationRef = db.collection("invitations").document(familyId + "_" + invitee.getUserId());
@@ -135,7 +154,9 @@ public class InvitationService {
                 if(keyVersion == null || family.getKeyVersion() != keyVersion) throw new InvitationException("This invitation is out of date, please ask to be invited again", HttpStatus.CONFLICT, "stale_invitation");
                 if(family.getMemberIds() != null && family.getMemberIds().contains(userId)) throw new InvitationException("You are already a member of this family", HttpStatus.BAD_REQUEST, "already_member");
 
-                FamilyMember member = new FamilyMember(invitee.getFullName(), userId, Role.MEMBER, Instant.now().toString(), invitee.getProfilePic());
+                Role memberRole = Role.valueOf(currentInvitation.getString("role"));
+                String relation = currentInvitation.getString("relation");
+                FamilyMember member = new FamilyMember(invitee.getFullName(), userId, memberRole, relation, Instant.now().toString(), invitee.getProfilePic());
                 family.addMember(userId, keyVersion.intValue(), wrappedFamilyKey, member);
                 transaction.set(familyRef, family);
                 transaction.update(invitationRef, "status", InvitationStatus.ACCEPTED.name(), "acceptedAt", Instant.now().toString());

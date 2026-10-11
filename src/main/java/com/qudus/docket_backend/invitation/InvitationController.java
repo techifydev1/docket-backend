@@ -31,7 +31,7 @@ public class InvitationController {
 
     @PostMapping
     public ResponseEntity<Void> handleInvite(@AuthenticationPrincipal FirebaseToken token, @RequestBody InviteRequest request) {
-        invitationService.invite(request.inviteeEmail(), token.getUid(), request.inviteePublicKey(), request.wrappedFamilyKey(), request.familyId());
+        invitationService.invite(request.inviteeEmail(), token.getUid(), request.inviteePublicKey(), request.wrappedFamilyKey(), request.familyId(), request.role(), request.relation());
         return ResponseEntity.status(HttpStatus.CREATED).build();
     }
 
