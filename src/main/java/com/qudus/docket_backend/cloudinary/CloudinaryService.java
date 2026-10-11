@@ -59,4 +59,8 @@ public class CloudinaryService {
 
         return MessageDigest.isEqual(expected.getBytes(StandardCharsets.UTF_8), signature.getBytes(StandardCharsets.UTF_8));
     }
+
+    public String createSignedDownloadUrl(String publicId, String version) {
+        return cloudinary.url().version(version).generate(publicId);
+    }
 }

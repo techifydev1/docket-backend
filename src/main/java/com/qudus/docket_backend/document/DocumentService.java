@@ -7,10 +7,13 @@ import com.qudus.docket_backend.cloudinary.CloudinaryService;
 import com.qudus.docket_backend.family.Family;
 import com.qudus.docket_backend.family.FamilyService;
 import org.jspecify.annotations.NonNull;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
 import java.time.Instant;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
@@ -20,6 +23,7 @@ public class DocumentService {
     private final CloudinaryService cloudinaryService;
     private final FamilyService familyService;
     private final Firestore db;
+    private final Logger log = LoggerFactory.getLogger(DocumentService.class);
 
     public DocumentService(CloudinaryService cloudinaryService, FamilyService familyService, Firestore db) {
         this.cloudinaryService = cloudinaryService;
@@ -60,6 +64,20 @@ public class DocumentService {
             }).toList();
         } catch (ExecutionException | InterruptedException e) {
             throw new RuntimeException(e);
+        }
+    }
+
+    public Map<String, Object> getDownloadUrl(String familyId, String docId, String userId) {
+        try {
+            if(!familyService.isUserInAFamily(familyId, userId)) throw new CloudinaryException("not_in_family", "You cannot view documents inside of this family", HttpStatus.FORBIDDEN);
+            var docRef = db.collection("families").document(familyId).collection("documents").document(docId);
+            var snapshot = docRef.get().get();
+            if(!snapshot.exists()) throw new CloudinaryException("not_found", "Document not found", HttpStatus.NOT_FOUND);
+            Document parsedSnapshot = snapshot.toObject(Document.class);
+            return Map.of("url", cloudinaryService.createSignedDownloadUrl(docId, parsedSnapshot.getCloudinaryVersion()));
+        } catch (ExecutionException | InterruptedException e) {
+            log.error("An error occurred while getting a download url for user: {} in family: {}. The error: {}", userId, familyId, e.getMessage());
+            throw new CloudinaryException("unknown_error", "An unexpected error occurred, please try again", HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 }
