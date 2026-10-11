@@ -61,6 +61,6 @@ public class CloudinaryService {
     }
 
     public String createSignedDownloadUrl(String publicId, String version) {
-        return cloudinary.url().version(version).generate(publicId);
+        return cloudinary.url().resourceType("raw").type("authenticated").version(version).signed(true).generate(publicId);
     }
 }

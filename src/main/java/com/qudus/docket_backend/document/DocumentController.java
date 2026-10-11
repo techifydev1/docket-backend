@@ -47,4 +47,12 @@ public class DocumentController {
     public ResponseEntity<List<DocumentResponse>> handleGetDocumentRequest(@AuthenticationPrincipal FirebaseToken token, @PathVariable String familyId) {
         return ResponseEntity.status(HttpStatus.OK).body(documentService.getUserDocumentsInAFamily(token.getUid(), familyId));
     }
+
+    @GetMapping("/{familyId}/{docId}/url")
+    public ResponseEntity<Map<String, Object>> handleGetDownloadUrlRequest(@AuthenticationPrincipal FirebaseToken token, @PathVariable String familyId, @PathVariable String docId) {
+        if (familyId == null || familyId.isBlank() || docId == null || docId.isBlank()) {
+            throw new CloudinaryException("invalid_download_request", "familyId and docId are required", HttpStatus.BAD_REQUEST);
+        }
+        return ResponseEntity.status(HttpStatus.OK).body(documentService.getDownloadUrl(familyId.trim(), docId.trim(), token.getUid()));
+    }
 }

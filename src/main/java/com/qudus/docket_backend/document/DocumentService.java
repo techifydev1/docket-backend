@@ -74,7 +74,7 @@ public class DocumentService {
             var snapshot = docRef.get().get();
             if(!snapshot.exists()) throw new CloudinaryException("not_found", "Document not found", HttpStatus.NOT_FOUND);
             Document parsedSnapshot = snapshot.toObject(Document.class);
-            return Map.of("url", cloudinaryService.createSignedDownloadUrl(docId, parsedSnapshot.getCloudinaryVersion()));
+            return Map.of("url", cloudinaryService.createSignedDownloadUrl(parsedSnapshot.getPublicId(), parsedSnapshot.getCloudinaryVersion()));
         } catch (ExecutionException | InterruptedException e) {
             log.error("An error occurred while getting a download url for user: {} in family: {}. The error: {}", userId, familyId, e.getMessage());
             throw new CloudinaryException("unknown_error", "An unexpected error occurred, please try again", HttpStatus.INTERNAL_SERVER_ERROR);
