@@ -38,7 +38,7 @@ public class UserService {
             UserRecord userRecord = firebaseAuth.updateUser(req);
             long creationMilli = userRecord.getUserMetadata().getCreationTimestamp();
 
-            User newUser = new User(userId, userRecord.getDisplayName(), request.phone(), request.email(), null, Instant.ofEpochMilli(creationMilli), false, request.publicKey());
+            User newUser = new User(userId, userRecord.getDisplayName(), request.phone(), request.email(), null, Instant.ofEpochMilli(creationMilli), false, request.publicKey(), null);
 
             docRef.set(newUser).get();
             log.info("user created successfully for user {}", request.email());
@@ -46,6 +46,18 @@ public class UserService {
         } catch (ExecutionException | InterruptedException | FirebaseAuthException e) {
             log.error(e.getMessage());
             throw new AuthException("Failed to create your account, please try again");
+        }
+    }
+
+    public UserResponse updateKeyBackup(String userId, String keyBackup) {
+        try {
+            var docRef = db.collection("users").document(userId);
+            docRef.update("keyBackup", keyBackup).get();
+            log.info("recovery key backup saved for user {}", userId);
+            return getUser(userId);
+        } catch (ExecutionException | InterruptedException e) {
+            log.error("Failed to save recovery key backup for user: {}", userId);
+            throw new AuthException("We're unable to save your recovery key, please try again");
         }
     }
 

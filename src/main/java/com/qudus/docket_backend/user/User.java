@@ -12,10 +12,11 @@ public final class User {
     private Instant createdAt;
     private boolean emailVerified;
     private String publicKey;
+    private String keyBackup;
 
     public User() {}
 
-    public User(String userId, String fullName, String phone, String email, String profilePic, Instant createdAt, boolean emailVerified, String publicKey) {
+    public User(String userId, String fullName, String phone, String email, String profilePic, Instant createdAt, boolean emailVerified, String publicKey, String keyBackup) {
         this.userId = userId;
         this.fullName = fullName;
         this.phone = phone;
@@ -24,6 +25,7 @@ public final class User {
         this.createdAt = createdAt;
         this.emailVerified = emailVerified;
         this.publicKey = publicKey;
+        this.keyBackup = keyBackup;
     }
 
     public String getUserId() {
@@ -54,12 +56,16 @@ public final class User {
         return publicKey;
     }
 
+    public String getKeyBackup() {
+        return keyBackup;
+    }
+
     public boolean isEmailVerified() {
         return emailVerified;
     }
 
     public UserResponse toResponse() {
-        return new UserResponse(fullName, userId, email, phone, profilePic, createdAt, emailVerified);
+        return new UserResponse(fullName, userId, email, phone, profilePic, createdAt, emailVerified, keyBackup);
     }
 
 }
