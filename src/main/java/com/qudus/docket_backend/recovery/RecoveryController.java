@@ -10,6 +10,8 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.Map;
+
 @RestController
 @RequestMapping("/api/recovery")
 public class RecoveryController {
@@ -22,5 +24,15 @@ public class RecoveryController {
     @PostMapping("/backup")
     public ResponseEntity<UserResponse> handleSaveKeyBackup(@AuthenticationPrincipal FirebaseToken token, @RequestBody RecoveryRequest request) {
         return ResponseEntity.status(HttpStatus.OK).body(recoveryService.saveKeyBackup(token.getUid(), request));
+    }
+
+    @PostMapping("/request")
+    public ResponseEntity<Map<String, String>> handleRequestRecovery(@AuthenticationPrincipal FirebaseToken token) {
+        return ResponseEntity.status(HttpStatus.OK).body(recoveryService.requestRecoveryCode(token.getUid()));
+    }
+
+    @PostMapping("/confirm")
+    public ResponseEntity<RecoveryResponse> handleConfirmRecovery(@AuthenticationPrincipal FirebaseToken token, @RequestBody RecoveryConfirmRequest request) {
+        return ResponseEntity.status(HttpStatus.OK).body(recoveryService.confirmRecovery(token.getUid(), request));
     }
 }
