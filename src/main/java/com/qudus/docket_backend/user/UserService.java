@@ -49,6 +49,23 @@ public class UserService {
         }
     }
 
+    public UserResponse updateUser(String userId, EditUserRequest request) {
+        try {
+            var docRef = db.collection("users").document(userId);
+            var snapshot = docRef.get().get();
+            if (!snapshot.exists()) {
+                throw new NoUserException("You are not authorized");
+            }
+            docRef.update("fullName", request.fullName()).get();
+            firebaseAuth.updateUser(new UserRecord.UpdateRequest(userId).setDisplayName(request.fullName()));
+            log.info("user profile updated for user {}", userId);
+            return getUser(userId);
+        } catch (ExecutionException | InterruptedException | FirebaseAuthException e) {
+            log.error("Failed to update profile for user: {}", userId);
+            throw new AuthException("We're unable to update your profile, please try again");
+        }
+    }
+
     public UserResponse updateKeyBackup(String userId, String keyBackup) {
         try {
             var docRef = db.collection("users").document(userId);
