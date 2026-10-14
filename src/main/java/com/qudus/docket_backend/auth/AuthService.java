@@ -111,4 +111,35 @@ public class AuthService {
         int number = 100000 + secureRandom.nextInt(900000);
         return String.valueOf(number);
     }
+
+
+    public Map<String, String> initializePasswordReset(Map<String, String> request) {
+        String email = request.get("email");
+        if(email == null) throw new AuthException("Incorrect or Invalid email, please check the email and try again");
+        try {
+            UserRecord userRecord = FirebaseAuth.getInstance().getUserByEmail(email);
+            return requestEmailVerificationCode(userRecord.getUid());
+        } catch (FirebaseAuthException e) {
+            throw new AuthException(e.getMessage());
+        }
+    }
+
+    public Map<String, String> verifyEmailAndResetPassword(Map<String, String> request) {
+        try {
+            String code = request.get("otp");
+            String newPassword = request.get("password");
+            String email = request.get("email");
+            if(code == null || code.isBlank()) throw new AuthException("Otp expired or invalid");
+            if(newPassword == null || newPassword.isBlank()) throw new AuthException("Please provide an updated password");
+            if(email == null || email.isBlank()) throw new AuthException("Please provide your email");
+            UserRecord userRecord = FirebaseAuth.getInstance().getUserByEmail(email);
+            boolean isValidOtp = verificationService.isValid(email, code);
+            if(!isValidOtp) throw new AuthException("Expired or invalid otp, please try again later");
+            UserRecord.UpdateRequest updateRequest = new UserRecord.UpdateRequest(userRecord.getUid()).setPassword(newPassword);
+            return Map.of("message", "Password reset successful, please proceed to login");
+        } catch (FirebaseAuthException e) {
+            throw new AuthException("Failed to reset you password, please try again");
+        }
+    }
+
 }

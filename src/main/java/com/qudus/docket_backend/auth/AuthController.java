@@ -36,4 +36,14 @@ public class AuthController {
     public ResponseEntity<Map<String, String>> handleSendEmailVerificationCode(@AuthenticationPrincipal FirebaseToken token) {
         return ResponseEntity.status(HttpStatus.OK).body(authService.requestEmailVerificationCode(token.getUid()));
     }
+
+    @PostMapping("/init-password-reset")
+    public ResponseEntity<Map<String, String>> handlePasswordResetInitRequest(@RequestBody Map<String, String> request) {
+        return ResponseEntity.status(HttpStatus.OK).body(authService.initializePasswordReset(request));
+    }
+
+    @PostMapping("/confirm-password-reset")
+    public ResponseEntity<Map<String, String>> handleConfirmPasswordResetRequest(@RequestBody Map<String, String> request) {
+        return ResponseEntity.status(HttpStatus.OK).body(authService.verifyEmailAndResetPassword(request));
+    }
 }
