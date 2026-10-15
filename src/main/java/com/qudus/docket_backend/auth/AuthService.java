@@ -30,6 +30,7 @@ public class AuthService {
     private final FamilyService familyService;
     private final EmailService emailService;
     private static final SecureRandom secureRandom = new SecureRandom();
+    private static final int MIN_PASSWORD_LENGTH = 6;
     private final VerificationService verificationService;
     private final Firestore db;
 
@@ -112,6 +113,15 @@ public class AuthService {
         return String.valueOf(number);
     }
 
+    private static void validateNewPassword(String password) {
+        if (password == null || password.isBlank()) {
+            throw new AuthException("Please provide an updated password");
+        }
+        if (password.length() < MIN_PASSWORD_LENGTH) {
+            throw new AuthException("Your password must be at least " + MIN_PASSWORD_LENGTH + " characters long");
+        }
+    }
+
 
     public Map<String, String> initializePasswordReset(Map<String, String> request) {
         String email = request.get("email");
@@ -130,7 +140,7 @@ public class AuthService {
             String newPassword = request.get("password");
             String email = request.get("email");
             if(code == null || code.isBlank()) throw new AuthException("Otp expired or invalid");
-            if(newPassword == null || newPassword.isBlank()) throw new AuthException("Please provide an updated password");
+            validateNewPassword(newPassword);
             if(email == null || email.isBlank()) throw new AuthException("Please provide your email");
             UserRecord userRecord = FirebaseAuth.getInstance().getUserByEmail(email);
             boolean isValidOtp = verificationService.isValid(email, code);

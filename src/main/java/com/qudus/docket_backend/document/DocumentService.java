@@ -83,11 +83,11 @@ public class DocumentService {
 
     public Map<String, String> delete(String userId, String docId, String familyId) {
         try {
-            if(!familyService.isUserInAFamily(familyId, userId) || !familyService.hasUploadAccess(familyId, userId)) throw new CloudinaryException("not_in_family", "You're not inside this family or you cannot delete files in this family", HttpStatus.UNAUTHORIZED);
             var docRef = db.collection("families").document(familyId).collection("documents").document(docId);
             var snapshot = docRef.get().get();
             if(!snapshot.exists()) throw new CloudinaryException("not_found", "Document not found", HttpStatus.NOT_FOUND);
             Document document = snapshot.toObject(Document.class);
+            if(!familyService.canDeleteDocument(familyId, userId, document.getOwnerId())) throw new CloudinaryException("delete_forbidden", "You don't have permission to delete this document", HttpStatus.FORBIDDEN);
             cloudinaryService.deleteAFile(document.getPublicId());
             docRef.delete().get();
             log.info("Document {} deleted from family {} by user {}", docId, familyId, userId);

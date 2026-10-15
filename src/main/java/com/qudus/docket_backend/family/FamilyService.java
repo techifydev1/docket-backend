@@ -74,6 +74,14 @@ public class FamilyService {
         return role.equals(Role.OWNER) || role.equals(Role.ADMIN);
     }
 
+    public boolean canDeleteDocument(String familyId, String userId, String documentOwnerId) {
+        var optionalRole = getUserRoleInAFamily(familyId, userId);
+        if(optionalRole.isEmpty()) return false;
+        Role role = optionalRole.get();
+        if(role.equals(Role.OWNER) || role.equals(Role.ADMIN)) return true;
+        return role.equals(Role.MEMBER) && userId.equals(documentOwnerId);
+    }
+
     private Optional<Role> getUserRoleInAFamily(String familyId, String userId) {
         try {
             var familyDocRef = db.collection("families").document(familyId);
