@@ -80,4 +80,21 @@ public class DocumentService {
             throw new CloudinaryException("unknown_error", "An unexpected error occurred, please try again", HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
+
+    public Map<String, String> delete(String userId, String docId, String familyId) {
+        try {
+            if(!familyService.isUserInAFamily(familyId, userId) || !familyService.hasUploadAccess(familyId, userId)) throw new CloudinaryException("not_in_family", "You're not inside this family or you cannot delete files in this family", HttpStatus.UNAUTHORIZED);
+            var docRef = db.collection("families").document(familyId).collection("documents").document(docId);
+            var snapshot = docRef.get().get();
+            if(!snapshot.exists()) throw new CloudinaryException("not_found", "Document not found", HttpStatus.NOT_FOUND);
+            Document document = snapshot.toObject(Document.class);
+            cloudinaryService.deleteAFile(document.getPublicId());
+            docRef.delete().get();
+            log.info("Document {} deleted from family {} by user {}", docId, familyId, userId);
+            return Map.of("message", "File/Document deleted successfully");
+        } catch (ExecutionException | InterruptedException e) {
+            log.error("An error occurred while deleting document: {} in family: {}. The error: {}", docId, familyId, e.getMessage());
+            throw new CloudinaryException("unknown_error", "An unexpected error occurred, please try again", HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
 }

@@ -2,10 +2,13 @@ package com.qudus.docket_backend.cloudinary;
 
 import com.cloudinary.Cloudinary;
 import com.qudus.docket_backend.family.FamilyService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
+import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.util.HashMap;
@@ -19,6 +22,7 @@ public class CloudinaryService {
     private final String cloudName;
     private final String apiKey;
     private final FamilyService familyService;
+    private final Logger log = LoggerFactory.getLogger(CloudinaryService.class);
 
     public CloudinaryService(Cloudinary cloudinary, @Value("${cloudinary.apiSecret}") String apiSecret, @Value("${cloudinary.cloudName}") String cloudName, @Value("${cloudinary.apiKey}") String apiKey, FamilyService familyService) {
         this.cloudinary = cloudinary;
@@ -62,5 +66,24 @@ public class CloudinaryService {
 
     public String createSignedDownloadUrl(String publicId, String version) {
         return cloudinary.url().resourceType("raw").type("authenticated").version(version).signed(true).generate(publicId);
+    }
+
+    public void deleteAFile(String publicId) {
+        try {
+            Map<String, Object> options = Map.of(
+                    "resource_type", "raw",
+                    "type", "authenticated",
+                    "invalidate", true
+            );
+            Map result = cloudinary.uploader().destroy(publicId, options);
+            Object status = result.get("result");
+            if (!"ok".equals(status)) {
+                log.error("Cloudinary did not delete document with public id: {}, result: {}", publicId, status);
+                throw new CloudinaryException("error_deleting", "Failed to delete your file", HttpStatus.INTERNAL_SERVER_ERROR);
+            }
+        } catch (IOException e) {
+            log.error("Failed to delete document from cloudinary public id: {}, with err: {}", publicId, e.getMessage());
+            throw new CloudinaryException("error_deleting", "Failed to delete your file", HttpStatus.INTERNAL_SERVER_ERROR);
+        }
     }
 }

@@ -136,6 +136,7 @@ public class AuthService {
             boolean isValidOtp = verificationService.isValid(email, code);
             if(!isValidOtp) throw new AuthException("Expired or invalid otp, please try again later");
             UserRecord.UpdateRequest updateRequest = new UserRecord.UpdateRequest(userRecord.getUid()).setPassword(newPassword);
+            FirebaseAuth.getInstance().updateUser(updateRequest);
             return Map.of("message", "Password reset successful, please proceed to login");
         } catch (FirebaseAuthException e) {
             throw new AuthException("Failed to reset you password, please try again");
