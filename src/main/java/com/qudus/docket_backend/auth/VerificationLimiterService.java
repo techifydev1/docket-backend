@@ -14,7 +14,8 @@ import java.util.concurrent.ConcurrentHashMap;
 public class VerificationLimiterService {
     private final HttpServletRequest httpServletRequest;
     private final ConcurrentHashMap<String, RateLimiter> limiters = new ConcurrentHashMap<>();
-    private final RateLimiterConfig config = RateLimiterConfig.custom().limitForPeriod(1).limitRefreshPeriod(Duration.ofMinutes(1)).timeoutDuration(Duration.ZERO).build();
+    private static final RateLimiterConfig SEND_CONFIG = RateLimiterConfig.custom().limitForPeriod(1).limitRefreshPeriod(Duration.ofMinutes(1)).timeoutDuration(Duration.ZERO).build();
+    private static final RateLimiterConfig VERIFY_CONFIG = RateLimiterConfig.custom().limitForPeriod(5).limitRefreshPeriod(Duration.ofMinutes(2)).timeoutDuration(Duration.ZERO).build();
 
     public VerificationLimiterService(HttpServletRequest httpServletRequest) {
         this.httpServletRequest = httpServletRequest;
@@ -22,12 +23,11 @@ public class VerificationLimiterService {
 
     public void allowRequest(String methodName) {
         String ipAddress = httpServletRequest.getRemoteAddr();
-        if(limiters.containsKey(ipAddress + methodName)) {
-            if(!limiters.get(ipAddress).acquirePermission()) {
-                throw new ResponseException("Too many request, please try again later", HttpStatus.TOO_MANY_REQUESTS, "too_many_request");
-            }
+        String key = ipAddress + ":" + methodName;
+        RateLimiterConfig config = methodName.equals("isValid") ? VERIFY_CONFIG : SEND_CONFIG;
+        RateLimiter limiter = limiters.computeIfAbsent(key, k -> RateLimiter.of(k, config));
+        if (!limiter.acquirePermission()) {
+            throw new ResponseException("Too many request, please try again later", HttpStatus.TOO_MANY_REQUESTS, "too_many_request");
         }
-        RateLimiter newLimiter = RateLimiter.of(ipAddress + methodName, config);
-        limiters.put(ipAddress, newLimiter);
     }
 }
