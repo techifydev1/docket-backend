@@ -38,4 +38,9 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ErrorResponse> handleInvitationException(InvitationException exception) {
         return ResponseEntity.status(exception.getStatus()).body(ErrorResponse.of(exception.getErrorCode(), exception.getMessage()));
     }
+
+    @ExceptionHandler
+    public ResponseEntity<ErrorResponse> handleResponseException(ResponseException exception) {
+        return ResponseEntity.status(exception.getStatus()).body(ErrorResponse.of(exception.getErrorCode(), exception.getMessage()));
+    }
 }
