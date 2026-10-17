@@ -8,12 +8,15 @@ import com.qudus.docket_backend.family.FamilyMember;
 import com.qudus.docket_backend.family.FamilyResponse;
 import com.qudus.docket_backend.family.Role;
 import com.qudus.docket_backend.family.Relation;
+import com.qudus.docket_backend.ratelimit.RateLimiterService;
 import com.qudus.docket_backend.user.User;
+import io.github.resilience4j.ratelimiter.RateLimiterConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
+import java.time.Duration;
 import java.time.Instant;
 import java.util.HashMap;
 import java.util.List;
@@ -26,13 +29,18 @@ public class InvitationService {
     private final Firestore db;
     private final Logger log = LoggerFactory.getLogger(InvitationService.class);
     private final EmailService emailService;
+    private final RateLimiterService limiterService;
+    private static final RateLimiterConfig INVITE_CONFIG = RateLimiterConfig.custom().limitForPeriod(5).limitRefreshPeriod(Duration.ofMinutes(10)).timeoutDuration(Duration.ZERO).build();
+    private static final RateLimiterConfig LOOKUP_CONFIG = RateLimiterConfig.custom().limitForPeriod(10).limitRefreshPeriod(Duration.ofMinutes(1)).timeoutDuration(Duration.ZERO).build();
 
-    public InvitationService(Firestore db, EmailService emailService) {
+    public InvitationService(Firestore db, EmailService emailService, RateLimiterService limiterService) {
         this.db = db;
         this.emailService = emailService;
+        this.limiterService = limiterService;
     }
 
     public Map<String, Object> initiateInvite(String inviteeEmail, String familyId, String userId) {
+        limiterService.allowRequest("invitation-initiate", LOOKUP_CONFIG);
         try {
             var familySnapShot = db.collection("families").document(familyId).get().get();
             if(!familySnapShot.exists()) throw new InvitationException("This family vault no longer exists", HttpStatus.NOT_FOUND, "family_not_found");
@@ -56,6 +64,7 @@ public class InvitationService {
     }
 
     public void invite(String inviteeEmail, String userId, String inviteePublicKey, String wrappedFamilyKey, String familyId, String role, String relation) {
+        limiterService.allowRequest("invitation-invite", INVITE_CONFIG);
         try {
             Role memberRole;
             try {

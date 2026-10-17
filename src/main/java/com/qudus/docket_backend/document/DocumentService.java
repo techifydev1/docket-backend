@@ -6,12 +6,15 @@ import com.qudus.docket_backend.cloudinary.CloudinaryException;
 import com.qudus.docket_backend.cloudinary.CloudinaryService;
 import com.qudus.docket_backend.family.Family;
 import com.qudus.docket_backend.family.FamilyService;
+import com.qudus.docket_backend.ratelimit.RateLimiterService;
+import io.github.resilience4j.ratelimiter.RateLimiterConfig;
 import org.jspecify.annotations.NonNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
+import java.time.Duration;
 import java.time.Instant;
 import java.util.HashMap;
 import java.util.List;
@@ -23,19 +26,24 @@ public class DocumentService {
     private final CloudinaryService cloudinaryService;
     private final FamilyService familyService;
     private final Firestore db;
+    private final RateLimiterService limiterService;
     private final Logger log = LoggerFactory.getLogger(DocumentService.class);
+    private static final RateLimiterConfig UPLOAD_CONFIG = RateLimiterConfig.custom().limitForPeriod(30).limitRefreshPeriod(Duration.ofMinutes(1)).timeoutDuration(Duration.ZERO).build();
 
-    public DocumentService(CloudinaryService cloudinaryService, FamilyService familyService, Firestore db) {
+    public DocumentService(CloudinaryService cloudinaryService, FamilyService familyService, Firestore db, RateLimiterService limiterService) {
         this.cloudinaryService = cloudinaryService;
         this.familyService = familyService;
         this.db = db;
+        this.limiterService = limiterService;
     }
 
     public Map<String, Object> getSignedUrl(String familyId, String userId) {
+        limiterService.allowRequest("document-sign", UPLOAD_CONFIG);
         return cloudinaryService.createSignedUrl(familyId, userId);
     }
 
     public void confirmUpload(String familyId, @NonNull String userId, @NonNull ConfirmRequest request) {
+        limiterService.allowRequest("document-confirm", UPLOAD_CONFIG);
         try {
             if(!userId.equals(request.ownerId()) && !familyService.canUploadForOthers(familyId, userId)) throw new CloudinaryException("cannot_upload_for_others", "Only admins and the vault owner can add documents for someone else", HttpStatus.FORBIDDEN);
             if(!cloudinaryService.isSignatureValid(familyId, userId, request.publicId(), request.cloudinaryVersion(), request.signature())) throw new CloudinaryException("invalid_upload_signature", "Upload could not be verified", HttpStatus.BAD_REQUEST);

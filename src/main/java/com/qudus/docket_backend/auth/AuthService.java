@@ -9,15 +9,18 @@ import com.qudus.docket_backend.exceptions.AuthException;
 import com.qudus.docket_backend.family.CreateFamilyRequest;
 import com.qudus.docket_backend.family.FamilyResponse;
 import com.qudus.docket_backend.family.FamilyService;
+import com.qudus.docket_backend.ratelimit.RateLimiterService;
 import com.qudus.docket_backend.user.CreateUserRequest;
 import com.qudus.docket_backend.user.UserResponse;
 import com.qudus.docket_backend.user.UserService;
+import io.github.resilience4j.ratelimiter.RateLimiterConfig;
 import org.jspecify.annotations.NonNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import java.security.SecureRandom;
+import java.time.Duration;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
@@ -31,18 +34,22 @@ public class AuthService {
     private final EmailService emailService;
     private static final SecureRandom secureRandom = new SecureRandom();
     private static final int MIN_PASSWORD_LENGTH = 6;
+    private static final RateLimiterConfig REGISTER_CONFIG = RateLimiterConfig.custom().limitForPeriod(5).limitRefreshPeriod(Duration.ofMinutes(10)).timeoutDuration(Duration.ZERO).build();
     private final VerificationService verificationService;
+    private final RateLimiterService limiterService;
     private final Firestore db;
 
-    public AuthService(UserService userService, FamilyService familyService, EmailService emailService, VerificationService verificationService, Firestore db) {
+    public AuthService(UserService userService, FamilyService familyService, EmailService emailService, VerificationService verificationService, RateLimiterService limiterService, Firestore db) {
         this.userService = userService;
         this.familyService = familyService;
         this.emailService = emailService;
         this.verificationService = verificationService;
+        this.limiterService = limiterService;
         this.db = db;
     }
 
     public AuthResponse register(String userId, @NonNull AuthRequest request) {
+        limiterService.allowRequest("register", REGISTER_CONFIG);
         if (request.fullName().isEmpty() || request.email().isEmpty() || request.phone().isEmpty()) {
             throw new AuthException("Full name, Email or Phone number cannot be empty");
         }
