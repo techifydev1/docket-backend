@@ -42,13 +42,13 @@ public class CloudinaryService {
         metaData.put("timestamp", System.currentTimeMillis() / 1000);
         metaData.put("type", "authenticated");
         metaData.put("overwrite", false);
-        metaData.put("max_file_size", 10485760);
 
         String signature = cloudinary.apiSignRequest(metaData, apiSecret,1);
 
         metaData.put("signature", signature);
         metaData.put("apiKey", apiKey);
         metaData.put("cloudName", cloudName);
+        metaData.put("max_file_size", 10485760);
 
         return metaData;
 
