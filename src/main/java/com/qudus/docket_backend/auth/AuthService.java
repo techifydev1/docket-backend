@@ -56,7 +56,7 @@ public class AuthService {
         if (request.publicKey() == null || request.publicKey().isBlank()) {
             throw new AuthException("Your encryption key is missing, please try registering again");
         }
-        CreateUserRequest userRequest = new CreateUserRequest(request.fullName(), request.email(), request.phone(), false, request.publicKey());
+        CreateUserRequest userRequest = new CreateUserRequest(request.fullName(), request.email(), request.phone(), request.publicKey());
         CreateFamilyRequest familyRequest = new CreateFamilyRequest(request.vaultName(), request.fullName(), request.wrappedFamilyKey());
         UserResponse user = userService.createUser(userId, userRequest);
         FamilyResponse family = familyService.createFamily(familyRequest, userId);
